@@ -1,0 +1,224 @@
+<title>Seet</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    font-family: sans-serif;
+  }
+
+  body {
+    max-width: 600px;
+    width: 100%;
+  }
+
+  pre {
+    font-size: 1.5em;
+    margin: 0;
+    padding-bottom: 20px;
+  }
+
+  #the-line {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+  }
+
+  #the-line span {
+    height: 50px;
+    width: 10%;
+    flex-grow: 1;
+    flex-shrink: 0;
+    border: 1px solid #000;
+    border-left: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    font-family: monospace;
+  }
+
+  #the-line span:first-child {
+    border-left: 1px solid #000;
+  }
+
+  hr {
+    width: 100%;
+    height: 0px;
+    border: 4px solid blue;
+  }
+
+  #step {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    position: relative;
+    cursor: grab;
+  }
+</style>
+
+<div id="the-line">
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<div id="step">
+  <hr />
+</div>
+
+<pre>
+var name = "Luke"
+</pre>
+
+<pre>
+var age = 23
+</pre>
+
+<pre>
+name = "Lu"
+</pre>
+
+<script>
+  const stepper = document.querySelector('#step')
+
+  let state = "idle"
+  let stepperPosition = 0
+
+  let cursorVelocity = 0
+  let stepperVelocity = 0
+  let previousPosition = null
+  const velocityHistory = []
+
+  stepper.addEventListener('pointerdown', (e) => {
+    e.preventDefault()
+    state = "grabbing"
+    stepperVelocity = 0
+
+    document.body.style.cursor = "grabbing"
+    stepper.style.cursor = "grabbing"
+    stepperPosition = e.clientY - stepper.offsetTop - stepper.clientHeight / 2
+    stepper.style.transform = `translateY(${stepperPosition}px)`
+  }, { passive: false })
+
+
+  addEventListener('pointermove', (e) => {
+    if (state === "grabbing") {
+
+      if (!previousPosition) {
+        previousPosition = e.clientY
+      } else {
+        const delta = e.clientY - previousPosition
+        previousPosition = e.clientY
+        velocityHistory.push(delta)
+        if (velocityHistory.length > 5) {
+          velocityHistory.shift()
+        }
+      }
+
+      stepperPosition = e.clientY - stepper.offsetTop - stepper.clientHeight / 2
+      if (stepperPosition < -100) {
+        stepperPosition = -100
+      }
+      stepper.style.transform = `translateY(${stepperPosition}px)`
+      e.preventDefault()
+    }
+  }, { passive: false })
+
+
+  addEventListener('pointerup', (e) => {
+    if (state === "grabbing") {
+      state = "idle"
+      startPosition = null
+      e.preventDefault()
+      stepper.style.cursor = "grab"
+      document.body.style.cursor = "auto"
+
+      stepperVelocity = sum(velocityHistory) / velocityHistory.length
+    }
+  }, { passive: false })
+
+  function sum(numbers) {
+    let total = 0
+    for (const number of numbers) {
+      total += number
+    }
+    return total
+  }
+
+
+  function tick() {
+    if (stepperVelocity !== 0) {
+      stepperPosition += stepperVelocity
+      if (stepperPosition < -100) {
+        stepperPosition = -100
+        stepperVelocity = 0
+      }
+      stepper.style.transform = `translateY(${stepperPosition}px)`
+      stepperVelocity *= 0.9
+      if (Math.abs(stepperVelocity) < 0.1) {
+        stepperVelocity = 0
+      }
+    }
+
+    let lowestPre = -1
+    for (const pre of pres) {
+      const preBottom = pre.getBoundingClientRect().y
+      const stepTop = stepper.getBoundingClientRect().y
+
+      if (stepTop > preBottom - 4) {
+        lowestPre++
+      }
+    }
+
+    if (lowestPre !== currentPre) {
+      currentPre = lowestPre
+      const line = lines[lowestPre]
+      for (let i = 0; i < 10; i++) {
+        const span = document.querySelector(`#the-line span:nth-child(${i + 1})`)
+        if (line[i]) {
+          span.textContent = line[i]
+        } else {
+          span.textContent = ""
+        }
+      }
+    }
+
+    requestAnimationFrame(tick)
+  }
+
+  let currentPre = -1
+
+  const pres = [...document.querySelectorAll('pre')]
+  const lines = [
+    ["L", "u", "k", "e"],
+    ["L", "u", "k", "e", "2", "3"],
+    ["L", "u", "", "", "2", "3"],
+  ]
+
+  lines[-1] = Array(10).fill("")
+
+
+
+
+  tick()
+
+
+
+</script>
